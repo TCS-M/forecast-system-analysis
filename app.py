@@ -4,9 +4,12 @@ import onnxruntime as ort
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 import numpy as np
+import logging
 
 from utils.weather import fetch_tokyo_daily_open_meteo
 from utils.features import make_feature_df
+
+logger = logging.getLogger("uvicorn.error")
 
 # モデルファイルのパスは環境変数から取得
 ONNX_PATH = os.getenv("MODEL_PATH", "models/stack_sales_model.onnx")
@@ -24,6 +27,10 @@ for path in glob.glob(os.path.join(MODEL_DIR, "sales_forecast_*.onnx")):
     sess = ort.InferenceSession(path)
     beer_sessions[beer]    = sess
     beer_input_names[beer] = sess.get_inputs()[0].name
+    print(f"Loaded model: {beer}, input tensor name: {beer_input_names[beer]}")
+
+print("All beers loaded:", list(beer_sessions.keys()))
+print("All input names:", beer_input_names)
 
 # FastAPI アプリケーション定義
 app = FastAPI(
@@ -67,12 +74,26 @@ def get_forecast(days: int = 7):
     # 2) 各ビール銘柄モデルで予測 ← 追加
     beer_preds = {}
     for beer, sess in beer_sessions.items():
+        logger.info(f"[DEBUG] Running model ▶ {beer}")
+        logger.info(f"[DEBUG]  input tensor name = {beer_input_names[beer]}")
+        logger.info(f"[DEBUG]  X.shape = {X.shape}, X.dtype = {X.dtype}")
         try:
-            beer_preds[beer] = sess.run(
-                None, {beer_input_names[beer]: X}
-            )[0]
+        # 2) 실제 추론
+            out = sess.run(None, {beer_input_names[beer]: X})[0]
+        
+        # 3) 출력 정보 출력
+            logger.info(f"[DEBUG]  {beer} output shape = {out.shape}")
+        # 평탄화 후 앞 3개 값만 보기
+            sample = out.flatten()[:3]
+            logger.info(f"[DEBUG]  {beer} sample preds = {sample}")
+
+            beer_preds[beer] = out
         except Exception as e:
-            raise HTTPException(500, f"{beer} モデル推論失敗: {e}")
+            logger.error(f"[ERROR] {beer} 모델 추론 중 예외 발생: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"{beer} モデル推論失敗: {e}"
+        )
     # 3) レスポンス整形
     weekday_map = {0:"月", 1:"火", 2:"水", 3:"木", 4:"金", 5:"土", 6:"日"}
     predictions = []
