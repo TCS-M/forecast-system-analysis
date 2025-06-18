@@ -1,0 +1,27 @@
+import requests
+import json
+
+# 勝どき周辺の座標（例）
+lat = 35.6595
+lon = 139.7661
+
+# Open-Meteo API URL
+url = (
+    f"https://api.open-meteo.com/v1/forecast?"
+    f"latitude={lat}&longitude={lon}&"
+    "daily=temperature_2m_max,temperature_2m_min,precipitation_sum&"
+    "timezone=Asia%2FTokyo"
+)
+
+# API呼び出し
+response = requests.get(url)
+data = response.json()
+
+# 結果保存先
+output_path = "weather_data.json"
+
+# 結果をJSONファイルに保存
+with open(output_path, "w", encoding="utf-8") as f:
+    json.dump(data, f, ensure_ascii=False, indent=2)
+
+print(f"✅ 天気データを {output_path} に保存しました。")
