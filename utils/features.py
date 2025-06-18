@@ -47,7 +47,7 @@ def make_feature_row(day_data: dict) -> dict:
     }
 
     # 曜日ワンホット (datetime.weekday(): 月=0, ... 日=6)
-    labels = ["weekday_月", "weekday_火", "weekday_水", "weekday_木", "weekday_金", "weekday_土", "weekday_日"]
+    labels = ["weekday_月", "weekday_火", "weekday_水", "weekday_木", "weekday_金", "weekday_土"]
     for idx, label in enumerate(labels):
         row[label] = 1 if dt.weekday() == idx else 0
 
