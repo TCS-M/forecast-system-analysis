@@ -6,3 +6,6 @@ joblib
 requests
 python-dotenv
 numpy==1.23.5
+onnx
+onnxruntime
+skl2onnx
