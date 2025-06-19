@@ -3,7 +3,7 @@ from typing import Optional
 import pandas as pd
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from database import SessionLocal, engine
+
 import models
 
 # FastAPI インスタンスは1回だけ
@@ -11,7 +11,7 @@ app = FastAPI()
 
 # --- 実績・天気データ表示API ---
 # CSV読み込み（必要に応じてパスを修正）
-df = pd.read_csv("../data/onehot.csv")
+df = pd.read_csv("../data/onehot2.csv")
 df['日付'] = pd.to_datetime(df['日付'])
 df = df.fillna(0)  # 欠損があっても動くように
 
@@ -89,4 +89,4 @@ def save_data_from_api(payload: dict, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
-
+    
